@@ -304,18 +304,10 @@ async def get_case_study(id):
 
 
 
-@app.get("/case_study/{id}")
-async def get_case_study(id):
+@app.get("/case_study/")
+async def get_all_case_studies():
 
     case_study = sa.Table('case_study', sa.MetaData(), autoload_with=engine)
-
-    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine)
-    case_study_has_technical_category = sa.Table('case_study_has_technical_category',sa.MetaData(), autoload_with=engine)
-
-    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
-    case_study_has_business_category = sa.Table('case_study_has_business_category',sa.MetaData(), autoload_with=engine)
-
-    case_study_review = sa.Table('case_study_review',sa.MetaData(), autoload_with=engine)
 
     q = session.query(
         case_study.c.title,
@@ -324,4 +316,100 @@ async def get_case_study(id):
         case_study.c.website
         
     ).all()
+    return q
+
+
+@app.get("/educational_resource/{id}")
+async def get_educational_resource(id):
+
+    educational_resource = sa.Table('educational_resource', sa.MetaData(), autoload_with=engine)
+    
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+    educational_resource_has_business_category = sa.Table('educational_resource_has_business_category',sa.MetaData(), autoload_with=engine)
+    
+    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine)
+    educational_resource_has_technical_category = sa.Table('educational_resource_has_technical_category',sa.MetaData(), autoload_with=engine)
+
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)
+    educational_resource_has_tag = sa.Table('educational_resource_has_tag',sa.MetaData(), autoload_with=engine)
+
+    educational_resource_review = sa.Table('educational_resource_review',sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        educational_resource
+
+        ).filter(
+            educational_resource.c.id == id
+        ).first()
+
+    r = session.query(
+        educational_resource_review.c.comment
+    ).filter(
+        educational_resource_review.c.educational_resource_id == id
+    ).all()
+
+
+    b = session.query(
+        business_category.c.category
+    ).join(
+        educational_resource_has_business_category,educational_resource_has_business_category.c.educational_resource_id == id
+    ).filter(
+        business_category.c.id == educational_resource_has_business_category.c.business_category_id
+    ).all()
+
+
+    t = session.query(
+        technical_category.c.category
+    ).join(
+        educational_resource_has_technical_category,educational_resource_has_technical_category.c.educational_resource_id == id
+    ).filter(
+        technical_category.c.id == educational_resource_has_technical_category.c.technical_category_id
+    ).all()
+
+    t1 = session.query(
+        tag.c.tag
+    ).join(
+        educational_resource_has_tag,educational_resource_has_tag.c.educational_resource_id == id
+    ).filter(
+        tag.c.id == educational_resource_has_tag.c.tag_id
+    ).all()
+
+    reviews = []
+    for x in r:
+        reviews.append(x[0])
+
+    business_categories = []
+    for x in b:
+        business_categories.append(x[0])
+
+    technical_categories = []
+    for x in t:
+        technical_categories.append(x[0])
+
+    tags = []
+    for x in t1:
+        tags.append(x[0])
+    
+    
+    result = {}
+    result = dict(q)
+    result["reviews"] = reviews
+    result["tags"] = tags
+    result["business_categories"] = business_categories
+    result["technical_categories"] = technical_categories
+    
+    return result
+
+
+
+@app.get("/educational_resource/")
+async def get_all_educational_resources():
+
+    educational_resource = sa.Table('educational_resource', sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        educational_resource
+        ).first()
+
     return q
