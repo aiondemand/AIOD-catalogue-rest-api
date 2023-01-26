@@ -536,7 +536,7 @@ async def get_news(id):
 
 
 @app.get("/news/")
-async def get_all_news(id):
+async def get_all_news():
     
     news = sa.Table('news', sa.MetaData(), autoload_with=engine)
 
@@ -628,7 +628,7 @@ async def get_open_call(id):
 
 
 @app.get("/open_call/")
-async def get_open_call(id):
+async def get_open_call():
 
 
     open_call = sa.Table('open_call', sa.MetaData(), autoload_with=engine)
@@ -796,7 +796,7 @@ async def get_project(id):
 
 
 @app.get("/project/")
-async def get_all_projects(id):
+async def get_all_projects():
 
     project = sa.Table('project', sa.MetaData(), autoload_with=engine)
 
@@ -993,7 +993,7 @@ async def get_research_bundle(id):
 
 
 @app.get("/research_bundle/")
-async def get_all_research_bundles(id):
+async def get_all_research_bundles():
 
     research_bundle = sa.Table('research_bundle', sa.MetaData(), autoload_with=engine)
 
