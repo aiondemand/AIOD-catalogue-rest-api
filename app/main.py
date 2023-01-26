@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
-DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb"
+DATABASE_URL = "mysql+pymysql://root:mypassword@ai4europe-db:3306/mydb"
 engine = sa.create_engine(DATABASE_URL)
 session = Session(engine)
 
@@ -23,8 +23,14 @@ inspector = inspect(engine)
 tables = inspector.get_table_names()
 
 
+
+
 @app.get("/ai_assets/{id}")
-async def get_ai_assets(id):
+async def get_ai_asset(id):
+
+    """
+    id: ID for the ai_asset that will be fetched
+    """
 
     ai_asset = sa.Table('ai_asset', sa.MetaData(), autoload_with=engine)
     organisation = sa.Table('organisation', sa.MetaData(), autoload_with=engine)
@@ -41,15 +47,7 @@ async def get_ai_assets(id):
     ai_asset_review = sa.Table('ai_asset_review',sa.MetaData(), autoload_with=engine)
 
     q = session.query(
-        ai_asset.c.title,
-        ai_asset.c.asset_type,
-        ai_asset.c.main_characteristic,
-        ai_asset.c.documentation,
-        ai_asset.c.gdpr_requirements,
-        ai_asset.c.trustworthy_ai,
-        ai_asset.c.license,
-        ai_asset.c.research_areas,
-        ai_asset.c.website,
+        ai_asset
         ).filter(
             ai_asset.c.id == id
         ).first()
@@ -119,17 +117,7 @@ async def get_all_ai_assets():
     ai_asset = sa.Table('ai_asset', sa.MetaData(), autoload_with=engine)
     
     q = session.query(
-        ai_asset.c.id,
-        ai_asset.c.title,
-        ai_asset.c.asset_type,
-        ai_asset.c.main_characteristic,
-        ai_asset.c.documentation,
-        ai_asset.c.gdpr_requirements,
-        ai_asset.c.trustworthy_ai,
-        ai_asset.c.license,
-        ai_asset.c.research_areas,
-        ai_asset.c.website,
-        ai_asset.c.version
+        ai_asset
         ).all()
 
     return q
@@ -140,6 +128,9 @@ async def get_all_ai_assets():
 
 @app.get("/organisation/{id}")
 async def get_organisation(id):
+    """
+    id: ID for the organisation that will be fetched
+    """
 
     organisation = sa.Table('organisation', sa.MetaData(), autoload_with=engine)
 
@@ -152,14 +143,7 @@ async def get_organisation(id):
     organisation_review = sa.Table('organisation_review',sa.MetaData(), autoload_with=engine)
 
     q = session.query(
-        organisation.c.title,
-        organisation.c.address,
-        organisation.c.connection_to_ai,
-        organisation.c.body,
-        organisation.c.email,
-        organisation.c.organisation_type,
-        organisation.c.relation_to_organisation,
-        organisation.c.website,
+        organisation
     ).filter(
         organisation.c.id == id
     ).first()
@@ -216,15 +200,7 @@ async def get_all_organisations():
     organisation = sa.Table('organisation', sa.MetaData(), autoload_with=engine)
 
     q = session.query(
-        organisation.c.id,
-        organisation.c.title,
-        organisation.c.address,
-        organisation.c.connection_to_ai,
-        organisation.c.body,
-        organisation.c.email,
-        organisation.c.organisation_type,
-        organisation.c.relation_to_organisation,
-        organisation.c.website,
+        organisation
     ).all()
    
     return q
@@ -237,6 +213,10 @@ async def get_all_organisations():
 
 @app.get("/case_study/{id}")
 async def get_case_study(id):
+    """
+    id: ID for the case_study that will be fetched
+    """
+
 
     case_study = sa.Table('case_study', sa.MetaData(), autoload_with=engine)
 
@@ -249,10 +229,7 @@ async def get_case_study(id):
     case_study_review = sa.Table('case_study_review',sa.MetaData(), autoload_with=engine)
 
     q = session.query(
-        case_study.c.title,
-        case_study.c.body,
-        case_study.c.email,
-        case_study.c.website
+        case_study
         
     ).filter(
         case_study.c.id == id
@@ -312,10 +289,7 @@ async def get_all_case_studies():
     case_study = sa.Table('case_study', sa.MetaData(), autoload_with=engine)
 
     q = session.query(
-        case_study.c.title,
-        case_study.c.body,
-        case_study.c.email,
-        case_study.c.website
+        case_study
         
     ).all()
     return q
@@ -323,6 +297,9 @@ async def get_all_case_studies():
 
 @app.get("/educational_resource/{id}")
 async def get_educational_resource(id):
+    """
+    id: ID for the educational_resource that will be fetched
+    """
 
     educational_resource = sa.Table('educational_resource', sa.MetaData(), autoload_with=engine)
     
@@ -420,6 +397,9 @@ async def get_all_educational_resources():
 
 @app.get("/event/{id}")
 async def get_event(id):
+    """
+    id: ID for the event that will be fetched
+    """
 
     event = sa.Table('event', sa.MetaData(), autoload_with=engine)
 
@@ -470,4 +450,192 @@ async def get_all_events(id):
         
     ).all()
    
+    return q
+
+
+
+@app.get("/news/{id}")
+async def get_news(id):
+    """
+    id: ID for news that will be fetched
+    """
+
+    news = sa.Table('news', sa.MetaData(), autoload_with=engine)
+    
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+    news_has_business_category = sa.Table('news_has_business_category',sa.MetaData(), autoload_with=engine)
+    
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)
+    news_has_tag = sa.Table('news_has_tag',sa.MetaData(), autoload_with=engine)
+
+    news_category = sa.Table('news_category',sa.MetaData(), autoload_with=engine)
+    news_has_news_category = sa.Table('news_has_news_category',sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        news
+
+        ).filter(
+            news.c.id == id
+        ).first()
+
+
+
+
+    b = session.query(
+        business_category.c.category
+    ).join(
+        news_has_business_category,news_has_business_category.c.news_id == id
+    ).filter(
+        business_category.c.id == news_has_business_category.c.business_category_id
+    ).all()
+
+
+
+    t = session.query(
+        tag.c.tag
+    ).join(
+        news_has_tag,news_has_tag.c.news_id == id
+    ).filter(
+        tag.c.id == news_has_tag.c.tag_id
+    ).all()
+
+
+    n = session.query(
+        news_category.c.category
+    ).join(
+        news_has_news_category,news_has_news_category.c.news_id == id
+    ).filter(
+        news_category.c.id == news_has_news_category.c.news_category_id
+    ).all()
+
+    
+    business_categories = []
+    for x in b:
+        business_categories.append(x[0])
+
+
+    tags = []
+    for x in t:
+        tags.append(x[0])
+
+    news_categories = []
+    for x in t:
+        news_categories.append(x[0])
+    
+    
+    result = {}
+    result = dict(q)
+    result["tags"] = tags
+    result["business_categories"] = business_categories
+    result["news_categories"] = news_categories
+
+    
+    return result
+
+
+
+@app.get("/news/")
+async def get_all_news(id):
+    
+    news = sa.Table('news', sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        news
+        ).all()
+    
+    return q
+
+
+@app.get("/open_call/{id}")
+async def get_open_call(id):
+    """
+    id: ID for open_call that will be fetched
+    """
+
+    open_call = sa.Table('open_call', sa.MetaData(), autoload_with=engine)
+    
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+    open_call_has_business_category = sa.Table('open_call_has_business_category',sa.MetaData(), autoload_with=engine)
+    
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)
+    open_call_has_tag = sa.Table('open_call_has_tag',sa.MetaData(), autoload_with=engine)
+
+    target_application = sa.Table('target_application',sa.MetaData(), autoload_with=engine)
+    open_call_has_target_application = sa.Table('open_call_has_target_application',sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        open_call
+        ).filter(
+            open_call.c.id == id
+        ).first()
+
+
+
+
+    b = session.query(
+        business_category.c.category
+    ).join(
+        open_call_has_business_category,open_call_has_business_category.c.open_call_id == id
+    ).filter(
+        business_category.c.id == open_call_has_business_category.c.business_category_id
+    ).all()
+
+
+
+    t = session.query(
+        tag.c.tag
+    ).join(
+        open_call_has_tag,open_call_has_tag.c.open_call_id == id
+    ).filter(
+        tag.c.id == open_call_has_tag.c.tag_id
+    ).all()
+
+
+    a = session.query(
+        target_application.c.application    
+    ).join(
+        open_call_has_target_application,open_call_has_target_application.c.open_call_id == id
+    ).filter(
+        target_application.c.id == open_call_has_target_application.c.target_application_id
+    ).all()
+
+    
+    business_categories = []
+    for x in b:
+        business_categories.append(x[0])
+
+
+    tags = []
+    for x in t:
+        tags.append(x[0])
+
+    target_applications = []
+    for x in a:
+        target_applications.append(x[0])
+    
+    
+    result = {}
+    result = dict(q)
+    result["tags"] = tags
+    result["business_categories"] = business_categories
+    result["target_applications"] = target_applications
+
+    
+    return result
+
+
+
+@app.get("/open_call/")
+async def get_open_call(id):
+
+
+    open_call = sa.Table('open_call', sa.MetaData(), autoload_with=engine)
+    
+
+    q = session.query(
+        open_call
+        ).all()
+
     return q
