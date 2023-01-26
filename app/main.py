@@ -639,3 +639,170 @@ async def get_open_call(id):
         ).all()
 
     return q
+
+
+
+
+@app.get("/project/{id}")
+async def get_project(id):
+    """
+    id: ID for project that will be fetched
+    """
+
+    project = sa.Table('project', sa.MetaData(), autoload_with=engine)
+    
+    ai_asset = sa.Table('ai_asset',sa.MetaData(), autoload_with=engine)
+    project_has_ai_asset = sa.Table('project_has_ai_asset',sa.MetaData(), autoload_with=engine)
+
+    case_study = sa.Table('case_study',sa.MetaData(), autoload_with=engine)
+    project_has_case_study = sa.Table('project_has_case_study',sa.MetaData(), autoload_with=engine)
+    
+    educational_resource = sa.Table('educational_resource',sa.MetaData(), autoload_with=engine)
+    project_has_educational_resource = sa.Table('project_has_educational_resource',sa.MetaData(), autoload_with=engine)
+
+    event = sa.Table('event',sa.MetaData(), autoload_with=engine)
+    project_has_event = sa.Table('project_has_event',sa.MetaData(), autoload_with=engine)
+
+    news = sa.Table('news',sa.MetaData(), autoload_with=engine)
+    project_has_news = sa.Table('project_has_news',sa.MetaData(), autoload_with=engine)
+
+    open_call = sa.Table('open_call',sa.MetaData(), autoload_with=engine)
+    project_has_open_call = sa.Table('project_has_open_call',sa.MetaData(), autoload_with=engine)
+
+    organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine)
+    project_has_organisation = sa.Table('project_has_organisation',sa.MetaData(), autoload_with=engine)
+
+    project_review = sa.Table('project_review',sa.MetaData(), autoload_with=engine)    
+
+
+    q = session.query(
+        project
+        ).filter(
+            project.c.id == id
+        ).first()
+
+
+
+
+    aa = session.query(
+        ai_asset.c.id
+    ).join(
+        project_has_ai_asset,project_has_ai_asset.c.project_id == id
+    ).filter(
+        ai_asset.c.id == project_has_ai_asset.c.ai_asset_id
+    ).all()
+
+
+    cs = session.query(
+        case_study.c.id
+    ).join(
+        project_has_case_study,project_has_case_study.c.project_id == id
+    ).filter(
+        case_study.c.id == project_has_case_study.c.case_study_id
+    ).all()
+
+
+    er = session.query(
+        educational_resource.c.id
+    ).join(
+        project_has_educational_resource,project_has_educational_resource.c.project_id == id
+    ).filter(
+        educational_resource.c.id == project_has_educational_resource.c.educational_resource_id
+    ).all()
+
+    n = session.query(
+        news.c.id
+    ).join(
+        project_has_news,project_has_news.c.project_id == id
+    ).filter(
+        news.c.id == project_has_news.c.news_id
+    ).all()
+
+    ev = session.query(
+        event.c.id
+    ).join(
+        project_has_event,project_has_event.c.project_id == id
+    ).filter(
+        event.c.id == project_has_event.c.event_id
+    ).all()
+
+
+    oc = session.query(
+        open_call.c.id
+    ).join(
+        project_has_open_call,project_has_open_call.c.project_id == id
+    ).filter(
+        open_call.c.id == project_has_open_call.c.open_call_id
+    ).all()
+
+    
+    org = session.query(
+        organisation.c.id
+    ).join(
+        project_has_organisation,project_has_organisation.c.project_id == id
+    ).filter(
+        organisation.c.id == project_has_organisation.c.organisation_id
+    ).all()
+
+
+    r = session.query(
+        project_review.c.comment
+    ).filter(
+        project_review.c.project_id == id
+    ).all()
+    
+    ai_assets = []
+    for x in aa:
+        ai_assets.append(x[0])
+
+    case_studies = []
+    for x in cs:
+        case_studies.append(x[0])
+
+    educational_resources = []
+    for x in er:
+        educational_resources.append(x[0])
+
+    events = []
+    for x in ev:
+        events.append(x[0])
+
+    open_calls = []
+    for x in oc:
+        open_calls.append(x[0])
+
+    organisations = []
+    for x in org:
+        organisations.append(x[0])
+
+    reviews = []
+    for x in r:
+        reviews.append(x[0])
+
+
+    
+    result = {}
+    result = dict(q)
+    result["ai_assets"] = ai_assets
+    result["case_studies"] = case_studies
+    result["educational_resources"] = educational_resources
+    result["events"] = events
+    result["open_calls"] = open_calls
+    result["organisations"] = organisations
+    result["reviews"] = reviews
+
+    
+    return result
+
+
+@app.get("/project/")
+async def get_all_project(id):
+
+    project = sa.Table('project', sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        project
+        ).all()
+
+    
+    return q
