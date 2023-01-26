@@ -410,6 +410,62 @@ async def get_all_educational_resources():
 
     q = session.query(
         educational_resource
-        ).first()
+        ).all()
 
+    return q
+
+
+
+@app.get("/event/{id}")
+async def get_event(id):
+
+    event = sa.Table('event', sa.MetaData(), autoload_with=engine)
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+    event_has_business_category = sa.Table('event_has_business_category',sa.MetaData(), autoload_with=engine)
+
+    
+
+    q = session.query(
+        event
+        
+    ).filter(
+        event.c.id == id
+    ).first()
+   
+  
+
+    b = session.query(
+        business_category.c.category
+    ).join(
+        event_has_business_category,event_has_business_category.c.event_id == id
+    ).filter(
+        business_category.c.id == event_has_business_category.c.business_category_id
+    ).all()
+
+
+    business_categories = []
+    for x in b:
+        business_categories.append(x[0])
+
+   
+  
+    result = {}
+    result = dict(q)
+    result["business_categories"] = business_categories  
+
+    return result
+
+
+@app.get("/event/")
+async def get_all_events(id):
+
+    event = sa.Table('event', sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        event
+        
+    ).all()
+   
     return q
