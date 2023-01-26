@@ -119,6 +119,7 @@ async def get_all_ai_assets():
     ai_asset = sa.Table('ai_asset', sa.MetaData(), autoload_with=engine)
     
     q = session.query(
+        ai_asset.c.id,
         ai_asset.c.title,
         ai_asset.c.asset_type,
         ai_asset.c.main_characteristic,
@@ -215,6 +216,7 @@ async def get_all_organisations():
     organisation = sa.Table('organisation', sa.MetaData(), autoload_with=engine)
 
     q = session.query(
+        organisation.c.id,
         organisation.c.title,
         organisation.c.address,
         organisation.c.connection_to_ai,
