@@ -796,12 +796,209 @@ async def get_project(id):
 
 
 @app.get("/project/")
-async def get_all_project(id):
+async def get_all_projects(id):
 
     project = sa.Table('project', sa.MetaData(), autoload_with=engine)
 
     q = session.query(
         project
+        ).all()
+
+    
+    return q
+
+
+@app.get("/research_bundle/{id}")
+async def get_research_bundle(id):
+    """
+    id: ID for research_bundle that will be fetched
+    """
+
+    research_bundle = sa.Table('research_bundle', sa.MetaData(), autoload_with=engine)
+    
+    ai_asset = sa.Table('ai_asset',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_ai_asset = sa.Table('research_bundle_has_ai_asset',sa.MetaData(), autoload_with=engine)
+
+    case_study = sa.Table('case_study',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_case_study = sa.Table('research_bundle_has_case_study',sa.MetaData(), autoload_with=engine)
+    
+    educational_resource = sa.Table('educational_resource',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_educational_resource = sa.Table('research_bundle_has_educational_resource',sa.MetaData(), autoload_with=engine)
+
+    event = sa.Table('event',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_event = sa.Table('research_bundle_has_event',sa.MetaData(), autoload_with=engine)
+
+    news = sa.Table('news',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_news = sa.Table('research_bundle_has_news',sa.MetaData(), autoload_with=engine)
+
+    open_call = sa.Table('open_call',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_open_call = sa.Table('research_bundle_has_open_call',sa.MetaData(), autoload_with=engine)
+
+    organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_organisation = sa.Table('research_bundle_has_organisation',sa.MetaData(), autoload_with=engine)
+
+    research_bundle_review = sa.Table('research_bundle_review',sa.MetaData(), autoload_with=engine)  
+
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)  
+    research_bundle_has_tag = sa.Table('research_bundle_has_tag',sa.MetaData(), autoload_with=engine)  
+
+    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine)
+    research_bundle_has_technical_category = sa.Table('research_bundle_has_technical_category',sa.MetaData(), autoload_with=engine)  
+
+
+    q = session.query(
+        research_bundle
+        ).filter(
+            research_bundle.c.id == id
+        ).first()
+
+
+
+
+    aa = session.query(
+        ai_asset.c.id
+    ).join(
+        research_bundle_has_ai_asset,research_bundle_has_ai_asset.c.research_bundle_id == id
+    ).filter(
+        ai_asset.c.id == research_bundle_has_ai_asset.c.ai_asset_id
+    ).all()
+
+
+    cs = session.query(
+        case_study.c.id
+    ).join(
+        research_bundle_has_case_study,research_bundle_has_case_study.c.research_bundle_id == id
+    ).filter(
+        case_study.c.id == research_bundle_has_case_study.c.case_study_id
+    ).all()
+
+
+    er = session.query(
+        educational_resource.c.id
+    ).join(
+        research_bundle_has_educational_resource,research_bundle_has_educational_resource.c.research_bundle_id == id
+    ).filter(
+        educational_resource.c.id == research_bundle_has_educational_resource.c.educational_resource_id
+    ).all()
+
+    n = session.query(
+        news.c.id
+    ).join(
+        research_bundle_has_news,research_bundle_has_news.c.research_bundle_id == id
+    ).filter(
+        news.c.id == research_bundle_has_news.c.news_id
+    ).all()
+
+    ev = session.query(
+        event.c.id
+    ).join(
+        research_bundle_has_event,research_bundle_has_event.c.research_bundle_id == id
+    ).filter(
+        event.c.id == research_bundle_has_event.c.event_id
+    ).all()
+
+
+    oc = session.query(
+        open_call.c.id
+    ).join(
+        research_bundle_has_open_call,research_bundle_has_open_call.c.research_bundle_id == id
+    ).filter(
+        open_call.c.id == research_bundle_has_open_call.c.open_call_id
+    ).all()
+
+    
+    org = session.query(
+        organisation.c.id
+    ).join(
+        research_bundle_has_organisation,research_bundle_has_organisation.c.research_bundle_id == id
+    ).filter(
+        organisation.c.id == research_bundle_has_organisation.c.organisation_id
+    ).all()
+
+
+    t = session.query(
+        tag.c.id
+    ).join(
+        research_bundle_has_tag,research_bundle_has_tag.c.research_bundle_id == id
+    ).filter(
+        tag.c.id == research_bundle_has_tag.c.tag_id
+    ).all()
+
+    t1 = session.query(
+        technical_category.c.id
+    ).join(
+        research_bundle_has_technical_category,research_bundle_has_technical_category.c.research_bundle_id == id
+    ).filter(
+        technical_category.c.id == research_bundle_has_technical_category.c.technical_category_id
+    ).all()
+
+
+    r = session.query(
+        research_bundle_review.c.comment
+    ).filter(
+        research_bundle_review.c.research_bundle_id == id
+    ).all()
+    
+    ai_assets = []
+    for x in aa:
+        ai_assets.append(x[0])
+
+    case_studies = []
+    for x in cs:
+        case_studies.append(x[0])
+
+    educational_resources = []
+    for x in er:
+        educational_resources.append(x[0])
+
+    events = []
+    for x in ev:
+        events.append(x[0])
+
+    open_calls = []
+    for x in oc:
+        open_calls.append(x[0])
+
+    organisations = []
+    for x in org:
+        organisations.append(x[0])
+
+    reviews = []
+    for x in r:
+        reviews.append(x[0])
+
+    tags = []
+    for x in t:
+        tags.append(x[0])
+
+    technical_categories = []
+    for x in t1:
+        technical_categories.append(x[0])
+    
+    result = {}
+    result = dict(q)
+    result["ai_assets"] = ai_assets
+    result["case_studies"] = case_studies
+    result["educational_resources"] = educational_resources
+    result["events"] = events
+    result["open_calls"] = open_calls
+    result["organisations"] = organisations
+    result["reviews"] = reviews
+    result["tags"] = tags
+    result["technical_categories"] = technical_categories
+
+    
+    return result
+
+
+
+@app.get("/research_bundle/")
+async def get_all_research_bundles(id):
+
+    research_bundle = sa.Table('research_bundle', sa.MetaData(), autoload_with=engine)
+
+    q = session.query(
+        research_bundle
         ).all()
 
     
