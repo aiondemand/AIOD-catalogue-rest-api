@@ -1,8 +1,13 @@
+from pyexpat import model
 from fastapi import FastAPI
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+
 import sqlalchemy as sa
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import inspect
+from sqlalchemy.inspection import inspect
 from sqlalchemy.sql import select,text
 import json
 from fastapi.encoders import jsonable_encoder
@@ -11,7 +16,8 @@ from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
-DATABASE_URL = "mysql+pymysql://root:mypassword@ai4europe-db:3306/mydb"
+# DATABASE_URL = "mysql+pymysql://root:mypassword@ai4europe-db:3306/mydb"
+DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
 engine = sa.create_engine(DATABASE_URL)
 session = Session(engine)
 
@@ -21,6 +27,99 @@ Base.prepare(engine, reflect=True)
 
 inspector = inspect(engine)
 tables = inspector.get_table_names()
+
+
+    
+
+class OrganisationModel(BaseModel):
+    title: str
+    relation_to_organisation: bool = False
+    connection_to_ai: str = None
+    organisation_type: Optional[str] = None
+    summary: Optional[str] = None
+    description: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    technical_categories: Optional[list] = None
+    business_categories: Optional[list] = None
+    review_comments: Optional[list] = None
+
+
+
+
+@app.post("/test/")
+async def insert_organisation(org: OrganisationModel):
+
+    Organisation = Base.classes.organisation
+    
+    # Organisation_Has_Business_Category = tables.classes.ai_asset
+    author_id = 1
+    drupal_id = 1
+    date = datetime.today().strftime('%Y-%m-%d') 
+    new_organisation = Organisation(
+        title = org.title,
+        date = date,
+        author_id = author_id,
+        drupal_id = drupal_id,
+        relation_to_organisation = org.relation_to_organisation,
+        organisation_type = org.organisation_type, 
+        connection_to_ai = org.relation_to_organisation,
+        summary = org.summary,
+        description = org.description,
+        email = org.email
+    )
+    session.add(new_organisation)
+    session.flush()
+    session.refresh(new_organisation)
+    new_id = new_organisation.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in org.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            organisation_has_business_category = sa.Table('organisation_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "organisation_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(organisation_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine) 
+    for category in org.technical_categories:
+        q = session.query(
+            technical_category.c.id
+            ).filter(
+                technical_category.c.category == category
+            ).first()
+        if q is not None:
+            organisation_has_technical_category = sa.Table('organisation_has_technical_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "organisation_id": new_id,
+                "technical_category_id": q[0]
+            }
+            stmt = sa.insert(organisation_has_technical_category).values(vals)
+            session.execute(stmt)
+
+
+
+    for review in org.review_comments:
+        organisation_review = sa.Table('organisation_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "organisation_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(organisation_review).values(vals)
+        session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
+
 
 
 
@@ -1003,3 +1102,4 @@ async def get_all_research_bundles():
 
     
     return q
+
