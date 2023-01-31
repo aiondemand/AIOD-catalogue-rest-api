@@ -1,3 +1,4 @@
+from os import stat_result
 from pyexpat import model
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -16,7 +17,7 @@ from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
-# DATABASE_URL = "mysql+pymysql://root:mypassword@ai4europe-db:3306/mydb"
+# DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
 DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
 engine = sa.create_engine(DATABASE_URL)
 session = Session(engine)
@@ -45,14 +46,36 @@ class OrganisationModel(BaseModel):
     review_comments: Optional[list] = None
 
 
+class AiAssetModel(BaseModel):
+    title: str
+    summary: str
+    main_characteristic: str
+    organisation: str 
+    asset_type: Optional[str] = None
+    technical_categories: Optional[list] = None
+    business_categories: Optional[list] = None
+    research_areas: Optional[str] = None
+    license: Optional[str] = None
+    other_license: Optional[str] = None
+    tags: Optional[list] = None
+    website: Optional[str] = None
+    contact_details: Optional[str] = None
+    documentation: Optional[str] = None
+    gdpr_requirements: Optional[str] = None
+    trustworthy_ai: Optional[str] = None
+    trustworthy_ai_assessment: Optional[str] = None
+    review_comments: Optional[list] = None
 
 
-@app.post("/test/")
+
+
+
+@app.post("/organisation/")
 async def insert_organisation(org: OrganisationModel):
 
     Organisation = Base.classes.organisation
+
     
-    # Organisation_Has_Business_Category = tables.classes.ai_asset
     author_id = 1
     drupal_id = 1
     date = datetime.today().strftime('%Y-%m-%d') 
@@ -72,7 +95,6 @@ async def insert_organisation(org: OrganisationModel):
     session.flush()
     session.refresh(new_organisation)
     new_id = new_organisation.id
-
 
     business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
     for category in org.business_categories:
@@ -121,8 +143,122 @@ async def insert_organisation(org: OrganisationModel):
     return  {"message": "OK"}
 
 
+@app.post("/ai_asset/")
+async def insert_ai_asset(ai_asset: AiAssetModel):
+    AiAsset = Base.classes.ai_asset
+    
 
 
+    organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine) 
+    q = session.query(
+        organisation.c.id
+        ).filter(
+            organisation.c.title == ai_asset.organisation
+        ).first()
+    
+    organisation_id = 0
+    if q is not None:
+        organisation_id = q[0]
+
+
+    author_id = 1
+    drupal_id = 1
+    version = 1
+    under_review = False
+    date = datetime.today().strftime('%Y-%m-%d') 
+    new_ai_asset = AiAsset(
+        version = version,
+        author_id = author_id,
+        drupal_id = drupal_id,
+        date = date,
+        organisation_id = organisation_id,
+        title = ai_asset.title,
+        under_review = under_review,
+        asset_type = ai_asset.asset_type,
+        contact_details = ai_asset.contact_details,
+        documentation = ai_asset.documentation,
+        gdpr_requirements = ai_asset.gdpr_requirements,
+        license = ai_asset.license,
+        other_licence = ai_asset.other_license,
+        research_areas = ai_asset.research_areas,
+        trustworthy_ai = ai_asset.trustworthy_ai,
+        trustworthy_ai_assessment = ai_asset.trustworthy_ai_assessment,
+        website = ai_asset.website
+
+    )
+
+    # organisation_id
+
+    session.add(new_ai_asset)
+    session.flush()
+    session.refresh(new_ai_asset)
+    new_id = new_ai_asset.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in ai_asset.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            ai_asset_has_business_category = sa.Table('ai_asset_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "ai_asset_id": new_id,
+                "ai_asset_version": ai_asset.version,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(ai_asset_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine) 
+    for category in ai_asset.technical_categories:
+        q = session.query(
+            technical_category.c.id
+            ).filter(
+                technical_category.c.category == category
+            ).first()
+        if q is not None:
+            ai_asset_has_technical_category = sa.Table('ai_asset_has_technical_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "ai_asset_id": new_id,
+                "ai_asset_version": ai_asset.version,
+                "technical_category_id": q[0]
+            }
+            stmt = sa.insert(ai_asset_has_technical_category).values(vals)
+            session.execute(stmt)
+
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine) 
+    for t in ai_asset.tags:
+        q = session.query(
+            tag.c.id
+            ).filter(
+                tag.c.tag == t
+            ).first()
+        if q is not None:
+            ai_asset_has_tag = sa.Table('ai_asset_has_tag',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "ai_asset_id": new_id,
+                "ai_asset_version": ai_asset.version,
+                "tag_id": q[0]
+            }
+            stmt = sa.insert(ai_asset_has_tag).values(vals)
+            session.execute(stmt)
+
+
+
+    for review in ai_asset.review_comments:
+        ai_asset_review = sa.Table('ai_asset_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "ai_asset_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(ai_asset_review).values(vals)
+        session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
 
 @app.get("/ai_assets/{id}")
 async def get_ai_asset(id):
