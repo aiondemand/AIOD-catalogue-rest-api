@@ -187,8 +187,6 @@ async def insert_ai_asset(ai_asset: AiAssetModel):
 
     )
 
-    # organisation_id
-
     session.add(new_ai_asset)
     session.flush()
     session.refresh(new_ai_asset)
@@ -259,6 +257,12 @@ async def insert_ai_asset(ai_asset: AiAssetModel):
 
     session.commit()
     return  {"message": "OK"}
+
+
+
+
+
+
 
 @app.get("/ai_assets/{id}")
 async def get_ai_asset(id):
