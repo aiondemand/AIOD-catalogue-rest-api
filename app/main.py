@@ -80,6 +80,32 @@ class CaseStudyModel(BaseModel):
 
 
 
+class EventModel(BaseModel):
+    title: str
+    summary: str
+    description: str
+    start_date: str
+    end_date: str     
+    date_of_event: Optional[str] = None
+    email: Optional[str] = None
+    registration_link: Optional[str] = None
+    event_type: Optional[str] = None
+    business_categories: Optional[list] = None
+
+
+
+class NewsModel(BaseModel):
+    title: str
+    body: str
+    source: Optional[str] = None
+    date: str
+    tags: Optional[list] = None
+    news_categories: Optional[list] = None
+    business_categories: Optional[list] = None
+    review_comments: Optional[list] = None
+
+
+
 @app.post("/organisation/")
 async def insert_organisation(org: OrganisationModel):
 
@@ -356,6 +382,136 @@ async def insert_case_study(case_study: CaseStudyModel):
     return  {"message": "OK"}
 
 
+
+@app.post("/event/")
+async def insert_event(event: EventModel):
+    Event = Base.classes.event\
+
+    author_id = 1
+    drupal_id = 1
+    date = datetime.today().strftime('%Y-%m-%d') 
+    start_date = date
+    end_date = date
+    new_event = Event(
+        author_id = author_id,
+        drupal_id = drupal_id,
+        date = date,
+        start_date = start_date,
+        end_date = end_date,
+        title = event.title,
+        description = event.description,
+        date_of_event = event.date_of_event,
+        event_type = event.event_type,
+        registration_link = event.registration_link
+    )
+
+    session.add(new_event)
+    session.flush()
+    session.refresh(new_event)
+    new_id = new_event.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in new_event.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            event_has_business_category = sa.Table('event_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "event_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(event_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    session.commit()
+    return  {"message": "OK"}
+
+
+@app.post("/news/")
+async def insert_news(news: NewsModel):
+    News = Base.classes.news
+    
+    author_id = 1
+    date = datetime.today().strftime('%Y-%m-%d') 
+    new_news = News(
+        author_id = author_id,
+        date = date,
+        body = news.body,
+        title = news.title,
+        source = news.source
+    )
+
+    session.add(new_news)
+    session.flush()
+    session.refresh(new_news)
+    new_id = new_news.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in news.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            news_has_business_category = sa.Table('news_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "news_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(news_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine) 
+    for t in news.tags:
+        q = session.query(
+            tag.c.id
+            ).filter(
+                tag.c.tag == t
+            ).first()
+        if q is not None:
+            news_has_tag = sa.Table('news_has_tag',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "news_id": new_id,
+                "tag_id": q[0]
+            }
+            stmt = sa.insert(news_has_tag).values(vals)
+            session.execute(stmt)
+
+    news_category = sa.Table('news_category',sa.MetaData(), autoload_with=engine) 
+    for category in news.news_categories:
+        q = session.query(
+            news_category.c.id
+            ).filter(
+                news_category.c.category == category
+            ).first()
+        if q is not None:
+            news_has_news_category = sa.Table('news_has_news_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "news_id": new_id,
+                "news_category_id": q[0]
+            }
+            stmt = sa.insert(news_has_news_category).values(vals)
+            session.execute(stmt)
+
+
+
+    for review in news.review_comments:
+        news_review = sa.Table('news_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "news_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(news_review).values(vals)
+        session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
 
 
 
