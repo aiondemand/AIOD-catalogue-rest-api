@@ -98,11 +98,34 @@ class NewsModel(BaseModel):
     title: str
     body: str
     source: Optional[str] = None
-    date: str
     tags: Optional[list] = None
     news_categories: Optional[list] = None
     business_categories: Optional[list] = None
     review_comments: Optional[list] = None
+
+
+
+class EducationalResourceModel(BaseModel):
+	title: str
+	organisation: str 
+	contact_details: Optional[str] = None
+	country: Optional[str] = None
+	credits: Optional[str] = None
+	duration_minutes_and_hours: Optional[str] = None
+	educational_type: Optional[str] = None
+	language: Optional[str] = None
+	educational_level: Optional[str] = None
+	number_of_weeks: Optional[str] = None
+	prerequisites: Optional[str] = None
+	body: Optional[str] = None
+	target_audience: Optional[str] = None
+	duration_years: Optional[str] = None
+	website: Optional[str] = None
+	business_categories: Optional[list] = None
+	technical_categories: Optional[list] = None
+	tags: Optional[list] = None
+	reviews: Optional[list] = None
+
 
 
 class OpenCallModel(BaseModel):
@@ -531,20 +554,6 @@ async def insert_open_call(open_call: OpenCallModel):
     OpenCall = Base.classes.open_call
     
 
-
-
-# class OpenCallModel(BaseModel):
-#     title: str
-#     date: str
-#     body: str
-#     start_date: str
-#     end_date: str  
-#     source: Optional[str] = None
-#     business_categories: Optional[list] = None
-#     review_comments: Optional[list] = None
-#     tags: Optional[list] = None
-#     target_applications: Optional[list] = None
-
     author_id = 1
     drupal_id = 1
     
@@ -631,6 +640,118 @@ async def insert_open_call(open_call: OpenCallModel):
 
     session.commit()
     return  {"message": "OK"}
+
+
+
+@app.post("/educational_resource/")
+async def insert_educational_resource(educational_resource: EducationalResourceModel):
+    EducationalResource = Base.classes.educational_resource
+    
+
+    organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine) 
+    q = session.query(
+        organisation.c.id
+        ).filter(
+            organisation.c.title == educational_resource.organisation
+        ).first()
+    
+    organisation_id = 0
+    if q is not None:
+        organisation_id = q[0]
+
+
+    author_id = 1
+    drupal_id = 1
+    date = datetime.today().strftime('%Y-%m-%d') 
+
+    new_educational_resource = EducationalResource(
+        author_id = author_id,
+        drupal_id = drupal_id,
+        date = date,
+        organisation_id = organisation_id,
+        title = educational_resource.title,
+        contact_details = educational_resource.contact_details,
+        country = educational_resource.country,
+        credits = educational_resource.credits,
+        duration_minutes_and_hours = educational_resource.duration_minutes_and_hours,
+        educational_type = educational_resource.educational_type,
+        language = educational_resource.language,
+        number_of_weeks = educational_resource.number_of_weeks,
+        prerequisites = educational_resource.prerequisites,
+        body = educational_resource.body,
+        target_audience = educational_resource.target_audience,
+        duration_years = educational_resource.duration_years,
+        website = educational_resource.website
+
+    )
+
+    session.add(new_educational_resource)
+    session.flush()
+    session.refresh(new_educational_resource)
+    new_id = new_educational_resource.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in educational_resource.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            educational_resource_has_business_category = sa.Table('educational_resource_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "educational_resource_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(educational_resource_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine) 
+    for category in educational_resource.technical_categories:
+        q = session.query(
+            technical_category.c.id
+            ).filter(
+                technical_category.c.category == category
+            ).first()
+        if q is not None:
+            educational_resource_has_technical_category = sa.Table('educational_resource_has_technical_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "educational_resource_id": new_id,
+                "technical_category_id": q[0]
+            }
+            stmt = sa.insert(educational_resource_has_technical_category).values(vals)
+            session.execute(stmt)
+
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine) 
+    for t in educational_resource.tags:
+        q = session.query(
+            tag.c.id
+            ).filter(
+                tag.c.tag == t
+            ).first()
+        if q is not None:
+            educational_resource_has_tag = sa.Table('educational_resource_has_tag',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "educational_resource_id": new_id,
+                "tag_id": q[0]
+            }
+            stmt = sa.insert(educational_resource_has_tag).values(vals)
+            session.execute(stmt)
+
+
+    for review in educational_resource.review_comments:
+        educational_resource_review = sa.Table('educational_resource_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "educational_resource_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(educational_resource_review).values(vals)
+        session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
+
 
 
 
