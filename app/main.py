@@ -68,6 +68,16 @@ class AiAssetModel(BaseModel):
 
 
 
+class CaseStudyModel(BaseModel):
+    title: str
+    summary: str
+    organisation: str
+    email: Optional[str] = None
+    website: Optional[str] = None
+    technical_categories: Optional[list] = None
+    business_categories: Optional[list] = None
+    review_comments: Optional[list] = None  
+
 
 
 @app.post("/organisation/")
@@ -259,6 +269,91 @@ async def insert_ai_asset(ai_asset: AiAssetModel):
     return  {"message": "OK"}
 
 
+
+
+@app.post("/case_study/")
+async def insert_case_study(case_study: CaseStudyModel):
+    CaseStudy = Base.classes.case_study
+    
+
+
+    organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine) 
+    q = session.query(
+        organisation.c.id
+        ).filter(
+            organisation.c.title == case_study.organisation
+        ).first()
+    
+    organisation_id = 0
+    if q is not None:
+        organisation_id = q[0]
+
+
+    author_id = 1
+    drupal_id = 1
+    version = 1
+    date = datetime.today().strftime('%Y-%m-%d') 
+    new_case_study = CaseStudy(
+        version = version,
+        author_id = author_id,
+        drupal_id = drupal_id,
+        date = date,
+        organisation_id = organisation_id,
+        title = case_study.title,
+        body = case_study.body,
+        email = case_study.email,
+        website = case_study.website
+    )
+
+    session.add(new_case_study)
+    session.flush()
+    session.refresh(new_case_study)
+    new_id = new_case_study.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in case_study.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            case_study_has_business_category = sa.Table('case_study_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "case_study_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(case_study_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine) 
+    for category in case_study.technical_categories:
+        q = session.query(
+            technical_category.c.id
+            ).filter(
+                technical_category.c.category == category
+            ).first()
+        if q is not None:
+            case_study_has_technical_category = sa.Table('case_study_has_technical_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "case_study_id": new_id,
+                "technical_category_id": q[0]
+            }
+            stmt = sa.insert(case_study_has_technical_category).values(vals)
+            session.execute(stmt)
+
+    for review in case_study.review_comments:
+        case_study_review = sa.Table('case_study_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "case_study_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(case_study_review).values(vals)
+        session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
 
 
 
