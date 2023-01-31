@@ -105,6 +105,17 @@ class NewsModel(BaseModel):
     review_comments: Optional[list] = None
 
 
+class OpenCallModel(BaseModel):
+    title: str
+    date: str
+    body: str
+    start_date: str
+    end_date: str  
+    source: Optional[str] = None
+    business_categories: Optional[list] = None
+    review_comments: Optional[list] = None
+    tags: Optional[list] = None
+    target_applications: Optional[list] = None
 
 @app.post("/organisation/")
 async def insert_organisation(org: OrganisationModel):
@@ -385,7 +396,7 @@ async def insert_case_study(case_study: CaseStudyModel):
 
 @app.post("/event/")
 async def insert_event(event: EventModel):
-    Event = Base.classes.event\
+    Event = Base.classes.event
 
     author_id = 1
     drupal_id = 1
@@ -512,6 +523,115 @@ async def insert_news(news: NewsModel):
 
     session.commit()
     return  {"message": "OK"}
+
+
+
+@app.post("/open_call/")
+async def insert_open_call(open_call: OpenCallModel):
+    OpenCall = Base.classes.open_call
+    
+
+
+
+# class OpenCallModel(BaseModel):
+#     title: str
+#     date: str
+#     body: str
+#     start_date: str
+#     end_date: str  
+#     source: Optional[str] = None
+#     business_categories: Optional[list] = None
+#     review_comments: Optional[list] = None
+#     tags: Optional[list] = None
+#     target_applications: Optional[list] = None
+
+    author_id = 1
+    drupal_id = 1
+    
+    date = datetime.today().strftime('%Y-%m-%d') 
+    start_date = date
+    end_date = date
+    new_open_call = OpenCall(
+        author_id = author_id,
+        drupal_id = drupal_id,
+        date = date,
+        start_date = start_date,
+        end_date = end_date,
+        title = open_call.title,
+        source = open_call.source,
+        body = open_call.body
+    
+    )
+
+    session.add(new_open_call)
+    session.flush()
+    session.refresh(new_open_call)
+    new_id = new_open_call.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in open_call.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            open_call_has_business_category = sa.Table('open_call_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "open_call_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(open_call_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    tag = sa.Table('tag',sa.MetaData(), autoload_with=engine) 
+    for t in open_call.tags:
+        q = session.query(
+            tag.c.id
+            ).filter(
+                tag.c.tag == t
+            ).first()
+        if q is not None:
+            open_call_has_tag = sa.Table('open_call_has_tag',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "open_call_id": new_id,
+                "tag_id": q[0]
+            }
+            stmt = sa.insert(open_call_has_tag).values(vals)
+            session.execute(stmt)
+
+
+
+    for review in open_call.review_comments:
+        open_call_review = sa.Table('open_call_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "open_call_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(open_call_review).values(vals)
+        session.execute(stmt)
+
+
+    target_application = sa.Table('target_application',sa.MetaData(), autoload_with=engine) 
+    for application in open_call.target_applications:
+        q = session.query(
+            target_application.c.id
+            ).filter(
+                target_application.c.application == application
+            ).first()
+        if q is not None:
+            open_call_has_target_application = sa.Table('open_call_has_target_application',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "open_call_id": new_id,
+                "target_application_id": q[0]
+            }
+            stmt = sa.insert(open_call_has_target_application).values(vals)
+            session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
+
 
 
 
