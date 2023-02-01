@@ -1,3 +1,4 @@
+from grp import struct_group
 from os import stat_result
 from pyexpat import model
 from fastapi import FastAPI
@@ -139,6 +140,25 @@ class OpenCallModel(BaseModel):
     review_comments: Optional[list] = None
     tags: Optional[list] = None
     target_applications: Optional[list] = None
+
+
+class ProjectModel(BaseModel):
+    acronym: str
+    title: str
+    body: str
+    links: str
+    project_type: Optional[str] = None
+    funding_call: Optional[str] = None
+    business_categories: Optional[list] = None
+    case_studies: Optional[list] = None
+    educational_resources: Optional[list] = None
+    events: Optional[list] = None
+    news: Optional[list] = None
+    open_calls: Optional[list] = None
+    organisations: Optional[list] = None
+    reviews: Optional[list] = None
+
+
 
 @app.post("/organisation/")
 async def insert_organisation(org: OrganisationModel):
@@ -751,6 +771,179 @@ async def insert_educational_resource(educational_resource: EducationalResourceM
 
     session.commit()
     return  {"message": "OK"}
+
+
+# class ProjectModel(BaseModel):
+#     acronym: str
+#     title: str
+#     body: str
+#     links: str
+#     project_type: Optional[str] = None
+#     funding_call: Optional[str] = None
+
+
+
+@app.post("/project/")
+async def insert_project(project: ProjectModel):
+    Project = Base.classes.project
+    
+
+    author_id = 1
+    drupal_id = 1
+    date = datetime.today().strftime('%Y-%m-%d') 
+
+    new_project = Project(
+        author_id = author_id,
+        drupal_id = drupal_id,
+        date = date,
+        title = project.title,      
+        body = project.body,
+        project_type = project.project_type,
+        funding_call = project.funding_call,
+        links = project.links
+    )
+
+    session.add(new_project)
+    session.flush()
+    session.refresh(new_project)
+    new_id = new_project.id
+
+
+    business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
+    for category in project.business_categories:
+        q = session.query(
+            business_category.c.id
+            ).filter(
+                business_category.c.category == category
+            ).first()
+        if q is not None:
+            project_has_business_category = sa.Table('project_has_business_category',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "business_category_id": q[0]
+            }
+            stmt = sa.insert(project_has_business_category).values(vals)
+            session.execute(stmt)        
+
+    case_study = sa.Table('case_study',sa.MetaData(), autoload_with=engine) 
+    for id in project.case_studies:
+        q = session.query(
+            case_study.c.id
+            ).filter(
+                case_study.c.id == id
+            ).first()
+        if q is not None:
+            project_has_case_study = sa.Table('project_has_case_study',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "case_study_id": q[0]
+            }
+            stmt = sa.insert(project_has_case_study).values(vals)
+            session.execute(stmt)
+
+    educational_resource = sa.Table('educational_resource',sa.MetaData(), autoload_with=engine) 
+    for id in project.educational_resources:
+        q = session.query(
+            educational_resource.c.id
+            ).filter(
+                educational_resource.c.id == id
+            ).first()
+        if q is not None:
+            project_has_educational_resource = sa.Table('project_has_educational_resource',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "educational_resource_id": q[0]
+            }
+            stmt = sa.insert(project_has_educational_resource).values(vals)
+            session.execute(stmt)
+
+    event = sa.Table('event',sa.MetaData(), autoload_with=engine) 
+    for id in project.events:
+        q = session.query(
+            event.c.id
+            ).filter(
+                event.c.id == id
+            ).first()
+        if q is not None:
+            project_has_event = sa.Table('project_has_event',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "event_id": q[0]
+            }
+            stmt = sa.insert(project_has_event).values(vals)
+            session.execute(stmt)
+
+
+    news = sa.Table('news',sa.MetaData(), autoload_with=engine) 
+    for id in project.news:
+        q = session.query(
+            news.c.id
+            ).filter(
+                news.c.id == id
+            ).first()
+        if q is not None:
+            project_has_news = sa.Table('project_has_news',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "news_id": q[0]
+            }
+            stmt = sa.insert(project_has_news).values(vals)
+            session.execute(stmt)
+
+
+
+    open_call = sa.Table('open_call',sa.MetaData(), autoload_with=engine) 
+    for id in project.open_calls:
+        q = session.query(
+            open_call.c.id
+            ).filter(
+                open_call.c.id == id
+            ).first()
+        if q is not None:
+            project_has_open_call = sa.Table('project_has_open_call',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "open_call_id": q[0]
+            }
+            stmt = sa.insert(project_has_open_call).values(vals)
+            session.execute(stmt)
+
+    
+    organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine) 
+    for id in project.organisations:
+        q = session.query(
+            organisation.c.id
+            ).filter(
+                organisation.c.id == id
+            ).first()
+        if q is not None:
+            project_has_organisation = sa.Table('project_has_organisation',sa.MetaData(), autoload_with=engine)
+            vals = {
+                "project_id": new_id,
+                "organisation_id": q[0]
+            }
+            stmt = sa.insert(project_has_organisation).values(vals)
+            session.execute(stmt)
+
+
+    for review in project.review_comments:
+        project_review = sa.Table('project_review',sa.MetaData(), autoload_with=engine)
+        vals = {
+            "project_id": new_id,
+            "comment": review
+        }
+        stmt = sa.insert(project_review).values(vals)
+        session.execute(stmt)
+
+    session.commit()
+    return  {"message": "OK"}
+
+
+
+
+
+
+
 
 
 
