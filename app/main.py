@@ -1928,3 +1928,132 @@ async def get_all_research_bundles():
     
     return q
 
+
+
+@app.delete("/ai_asset/{id}")
+async def delete_ai_asset(id):
+    obj = Base.classes.ai_asset
+
+    session.query(
+        obj
+        ).filter(
+            obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}
+
+
+@app.delete("/organisation/{id}")
+async def delete_organisation(id):
+    obj = Base.classes.organisation
+
+    session.query(
+        obj
+        ).filter(
+            obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}
+
+
+
+@app.delete("/case_study/{id}")
+async def delete_case_study(id):
+    obj = Base.classes.case_study
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}
+
+
+
+@app.delete("/educational_resource/{id}")
+async def delete_educational_resource(id):
+    obj = Base.classes.educational_resource
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}  
+
+
+@app.delete("/event/{id}")
+async def delete_event(id):
+    obj = Base.classes.event
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}  
+
+@app.delete("/news/{id}")
+async def delete_news(id):
+    obj = Base.classes.news
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}  
+
+
+@app.delete("/open_call/{id}")
+async def delete_open_call(id):
+    obj = Base.classes.open_call
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}  
+
+
+@app.delete("/project/{id}")
+async def delete_open_call(id):
+    obj = Base.classes.project
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}  
+
+
+@app.delete("/research_bundle/{id}")
+async def delete_open_call(id):
+    obj = Base.classes.research_bundle
+    session.query(
+        obj
+        ).filter(
+           obj.id == id
+        ).delete()
+
+    session.commit()
+
+    return {"message": "OK"}  
