@@ -14,12 +14,18 @@ from sqlalchemy.sql import select,text
 import json
 from fastapi.encoders import jsonable_encoder
 
+tags_metadata = [
+    {"name": "Get"},
+    {"name": "Get All"},
+    {"name": "Post"},
+    {"name": "Delete"}
+]
 
 
-app = FastAPI()
+app = FastAPI(openapi_tags=tags_metadata)
 
-# DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
-DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
+DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
+# DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
 engine = sa.create_engine(DATABASE_URL)
 session = Session(engine)
 
@@ -30,8 +36,6 @@ Base.prepare(engine, reflect=True)
 inspector = inspect(engine)
 tables = inspector.get_table_names()
 
-
-    
 
 class OrganisationModel(BaseModel):
     title: str
@@ -135,7 +139,6 @@ class OpenCallModel(BaseModel):
     body: str
     start_date: str
     end_date: str  
-    source: Optional[str] = None
     business_categories: Optional[list] = None
     review_comments: Optional[list] = None
     tags: Optional[list] = None
@@ -160,7 +163,7 @@ class ProjectModel(BaseModel):
 
 
 
-@app.post("/organisation/")
+@app.post("/organisation/", tags = ["Post"])
 async def insert_organisation(org: OrganisationModel):
 
     Organisation = Base.classes.organisation
@@ -184,7 +187,6 @@ async def insert_organisation(org: OrganisationModel):
     session.add(new_organisation)
     session.flush()
     session.refresh(new_organisation)
-    new_id = new_organisation.id
 
     business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
     for category in org.business_categories:
@@ -233,7 +235,7 @@ async def insert_organisation(org: OrganisationModel):
     return  {"message": "OK"}
 
 
-@app.post("/ai_asset/")
+@app.post("/ai_asset/",tags = ["Post"])
 async def insert_ai_asset(ai_asset: AiAssetModel):
     AiAsset = Base.classes.ai_asset
     
@@ -351,7 +353,7 @@ async def insert_ai_asset(ai_asset: AiAssetModel):
 
 
 
-@app.post("/case_study/")
+@app.post("/case_study/",tags = ["Post"])
 async def insert_case_study(case_study: CaseStudyModel):
     CaseStudy = Base.classes.case_study
     
@@ -437,7 +439,7 @@ async def insert_case_study(case_study: CaseStudyModel):
 
 
 
-@app.post("/event/")
+@app.post("/event/",tags = ["Post"])
 async def insert_event(event: EventModel):
     Event = Base.classes.event
 
@@ -485,7 +487,7 @@ async def insert_event(event: EventModel):
     return  {"message": "OK"}
 
 
-@app.post("/news/")
+@app.post("/news/",tags = ["Post"])
 async def insert_news(news: NewsModel):
     News = Base.classes.news
     
@@ -569,7 +571,7 @@ async def insert_news(news: NewsModel):
 
 
 
-@app.post("/open_call/")
+@app.post("/open_call/",tags = ["Post"])
 async def insert_open_call(open_call: OpenCallModel):
     OpenCall = Base.classes.open_call
     
@@ -663,7 +665,7 @@ async def insert_open_call(open_call: OpenCallModel):
 
 
 
-@app.post("/educational_resource/")
+@app.post("/educational_resource/",tags = ["Post"])
 async def insert_educational_resource(educational_resource: EducationalResourceModel):
     EducationalResource = Base.classes.educational_resource
     
@@ -773,17 +775,8 @@ async def insert_educational_resource(educational_resource: EducationalResourceM
     return  {"message": "OK"}
 
 
-# class ProjectModel(BaseModel):
-#     acronym: str
-#     title: str
-#     body: str
-#     links: str
-#     project_type: Optional[str] = None
-#     funding_call: Optional[str] = None
 
-
-
-@app.post("/project/")
+@app.post("/project/",tags = ["Post"])
 async def insert_project(project: ProjectModel):
     Project = Base.classes.project
     
@@ -939,17 +932,7 @@ async def insert_project(project: ProjectModel):
     return  {"message": "OK"}
 
 
-
-
-
-
-
-
-
-
-
-
-@app.get("/ai_assets/{id}")
+@app.get("/ai_assets/{id}",tags = ["Get"])
 async def get_ai_asset(id):
 
     """
@@ -957,7 +940,6 @@ async def get_ai_asset(id):
     """
 
     ai_asset = sa.Table('ai_asset', sa.MetaData(), autoload_with=engine)
-    organisation = sa.Table('organisation', sa.MetaData(), autoload_with=engine)
 
     business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
     ai_asset_has_business_category = sa.Table('ai_asset_has_business_category',sa.MetaData(), autoload_with=engine)
@@ -1035,7 +1017,7 @@ async def get_ai_asset(id):
     return result
 
 
-@app.get("/ai_assets/")
+@app.get("/ai_assets/",tags = ["Get All"])
 async def get_all_ai_assets():
 
     ai_asset = sa.Table('ai_asset', sa.MetaData(), autoload_with=engine)
@@ -1048,9 +1030,7 @@ async def get_all_ai_assets():
 
 
 
-
-
-@app.get("/organisation/{id}")
+@app.get("/organisation/{id}",tags = ["Get"])
 async def get_organisation(id):
     """
     id: ID for the organisation that will be fetched
@@ -1118,7 +1098,7 @@ async def get_organisation(id):
 
 
 
-@app.get("/organisation")
+@app.get("/organisation/", tags = ["Get All"])
 async def get_all_organisations():
 
     organisation = sa.Table('organisation', sa.MetaData(), autoload_with=engine)
@@ -1126,16 +1106,13 @@ async def get_all_organisations():
     q = session.query(
         organisation
     ).all()
-   
+
+    print(jsonable_encoder(q))
     return q
 
 
 
-
-
-
-
-@app.get("/case_study/{id}")
+@app.get("/case_study/{id}",tags = ["Get"])
 async def get_case_study(id):
     """
     id: ID for the case_study that will be fetched
@@ -1207,7 +1184,7 @@ async def get_case_study(id):
 
 
 
-@app.get("/case_study/")
+@app.get("/case_study/", tags = ["Get All"])
 async def get_all_case_studies():
 
     case_study = sa.Table('case_study', sa.MetaData(), autoload_with=engine)
@@ -1219,7 +1196,7 @@ async def get_all_case_studies():
     return q
 
 
-@app.get("/educational_resource/{id}")
+@app.get("/educational_resource/{id}",tags = ["Get"])
 async def get_educational_resource(id):
     """
     id: ID for the educational_resource that will be fetched
@@ -1306,7 +1283,7 @@ async def get_educational_resource(id):
 
 
 
-@app.get("/educational_resource/")
+@app.get("/educational_resource/",tags = ["Get All"])
 async def get_all_educational_resources():
 
     educational_resource = sa.Table('educational_resource', sa.MetaData(), autoload_with=engine)
@@ -1319,7 +1296,7 @@ async def get_all_educational_resources():
 
 
 
-@app.get("/event/{id}")
+@app.get("/event/{id}",tags = ["Get"])
 async def get_event(id):
     """
     id: ID for the event that will be fetched
@@ -1364,7 +1341,7 @@ async def get_event(id):
     return result
 
 
-@app.get("/event/")
+@app.get("/event/",tags = ["Get All"])
 async def get_all_events(id):
 
     event = sa.Table('event', sa.MetaData(), autoload_with=engine)
@@ -1378,7 +1355,7 @@ async def get_all_events(id):
 
 
 
-@app.get("/news/{id}")
+@app.get("/news/{id}",tags = ["Get"])
 async def get_news(id):
     """
     id: ID for news that will be fetched
@@ -1459,7 +1436,7 @@ async def get_news(id):
 
 
 
-@app.get("/news/")
+@app.get("/news/",tags = ["Get All"])
 async def get_all_news():
     
     news = sa.Table('news', sa.MetaData(), autoload_with=engine)
@@ -1471,7 +1448,7 @@ async def get_all_news():
     return q
 
 
-@app.get("/open_call/{id}")
+@app.get("/open_call/{id}", tags = ["Get"])
 async def get_open_call(id):
     """
     id: ID for open_call that will be fetched
@@ -1551,8 +1528,8 @@ async def get_open_call(id):
 
 
 
-@app.get("/open_call/")
-async def get_open_call():
+@app.get("/open_call/",tags = ["Get All"])
+async def get_all_open_calls():
 
 
     open_call = sa.Table('open_call', sa.MetaData(), autoload_with=engine)
@@ -1567,7 +1544,7 @@ async def get_open_call():
 
 
 
-@app.get("/project/{id}")
+@app.get("/project/{id}",tags = ["Get"])
 async def get_project(id):
     """
     id: ID for project that will be fetched
@@ -1719,7 +1696,7 @@ async def get_project(id):
     return result
 
 
-@app.get("/project/")
+@app.get("/project/",tags = ["Get All"])
 async def get_all_projects():
 
     project = sa.Table('project', sa.MetaData(), autoload_with=engine)
@@ -1732,7 +1709,7 @@ async def get_all_projects():
     return q
 
 
-@app.get("/research_bundle/{id}")
+@app.get("/research_bundle/{id}",tags = ["Get"])
 async def get_research_bundle(id):
     """
     id: ID for research_bundle that will be fetched
@@ -1916,7 +1893,7 @@ async def get_research_bundle(id):
 
 
 
-@app.get("/research_bundle/")
+@app.get("/research_bundle/",tags = ["Get All"])
 async def get_all_research_bundles():
 
     research_bundle = sa.Table('research_bundle', sa.MetaData(), autoload_with=engine)
@@ -1930,7 +1907,7 @@ async def get_all_research_bundles():
 
 
 
-@app.delete("/ai_asset/{id}")
+@app.delete("/ai_asset/{id}",tags = ["Delete"])
 async def delete_ai_asset(id):
     obj = Base.classes.ai_asset
 
@@ -1945,7 +1922,7 @@ async def delete_ai_asset(id):
     return {"message": "OK"}
 
 
-@app.delete("/organisation/{id}")
+@app.delete("/organisation/{id}",tags = ["Delete"])
 async def delete_organisation(id):
     obj = Base.classes.organisation
 
@@ -1961,7 +1938,7 @@ async def delete_organisation(id):
 
 
 
-@app.delete("/case_study/{id}")
+@app.delete("/case_study/{id}",tags = ["Delete"])
 async def delete_case_study(id):
     obj = Base.classes.case_study
     session.query(
@@ -1976,7 +1953,7 @@ async def delete_case_study(id):
 
 
 
-@app.delete("/educational_resource/{id}")
+@app.delete("/educational_resource/{id}",tags = ["Delete"])
 async def delete_educational_resource(id):
     obj = Base.classes.educational_resource
     session.query(
@@ -1990,7 +1967,7 @@ async def delete_educational_resource(id):
     return {"message": "OK"}  
 
 
-@app.delete("/event/{id}")
+@app.delete("/event/{id}",tags = ["Delete"])
 async def delete_event(id):
     obj = Base.classes.event
     session.query(
@@ -2003,7 +1980,7 @@ async def delete_event(id):
 
     return {"message": "OK"}  
 
-@app.delete("/news/{id}")
+@app.delete("/news/{id}",tags = ["Delete"])
 async def delete_news(id):
     obj = Base.classes.news
     session.query(
@@ -2017,7 +1994,7 @@ async def delete_news(id):
     return {"message": "OK"}  
 
 
-@app.delete("/open_call/{id}")
+@app.delete("/open_call/{id}",tags = ["Delete"])
 async def delete_open_call(id):
     obj = Base.classes.open_call
     session.query(
@@ -2031,8 +2008,8 @@ async def delete_open_call(id):
     return {"message": "OK"}  
 
 
-@app.delete("/project/{id}")
-async def delete_open_call(id):
+@app.delete("/project/{id}",tags = ["Delete"])
+async def delete_project(id):
     obj = Base.classes.project
     session.query(
         obj
@@ -2045,8 +2022,8 @@ async def delete_open_call(id):
     return {"message": "OK"}  
 
 
-@app.delete("/research_bundle/{id}")
-async def delete_open_call(id):
+@app.delete("/research_bundle/{id}",tags = ["Delete"])
+async def delete_research_bundle(id):
     obj = Base.classes.research_bundle
     session.query(
         obj
