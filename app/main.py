@@ -18,7 +18,7 @@ tags_metadata = [
     {"name": "Get"},
     {"name": "Get All"},
     {"name": "Post"},
-    {"name": "Delete"}
+    {"name": "Delete"},
 ]
 
 
@@ -187,6 +187,7 @@ async def insert_organisation(org: OrganisationModel):
     session.add(new_organisation)
     session.flush()
     session.refresh(new_organisation)
+    new_id = new_organisation.id
 
     business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine) 
     for category in org.business_categories:
@@ -232,7 +233,7 @@ async def insert_organisation(org: OrganisationModel):
         session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New organisation with ID": new_id}
 
 
 @app.post("/ai_asset/",tags = ["Post"])
@@ -348,7 +349,7 @@ async def insert_ai_asset(ai_asset: AiAssetModel):
         session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New ai asset with ID": new_id}
 
 
 
@@ -435,7 +436,7 @@ async def insert_case_study(case_study: CaseStudyModel):
         session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New case study with ID": new_id}
 
 
 
@@ -567,7 +568,7 @@ async def insert_news(news: NewsModel):
         session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New news entry with ID": new_id}
 
 
 
@@ -661,7 +662,7 @@ async def insert_open_call(open_call: OpenCallModel):
             session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New open call with ID": new_id}
 
 
 
@@ -772,7 +773,7 @@ async def insert_educational_resource(educational_resource: EducationalResourceM
         session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New educational resource with ID": new_id}
 
 
 
@@ -929,7 +930,7 @@ async def insert_project(project: ProjectModel):
         session.execute(stmt)
 
     session.commit()
-    return  {"message": "OK"}
+    return  {"New project with ID": new_id}
 
 
 @app.get("/ai_assets/{id}",tags = ["Get"])
