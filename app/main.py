@@ -19,13 +19,14 @@ tags_metadata = [
     {"name": "Get All"},
     {"name": "Post"},
     {"name": "Delete"},
+    {"name": "Update"}
 ]
 
 
 app = FastAPI(openapi_tags=tags_metadata)
 
-DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
-# DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
+# DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
+DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
 engine = sa.create_engine(DATABASE_URL)
 session = Session(engine)
 
@@ -53,23 +54,22 @@ class OrganisationModel(BaseModel):
 
 class AiAssetModel(BaseModel):
     title: str
-    summary: str
     main_characteristic: str
     organisation: str 
-    asset_type: Optional[str] = None
-    technical_categories: Optional[list] = None
-    business_categories: Optional[list] = None
-    research_areas: Optional[str] = None
-    license: Optional[str] = None
-    other_license: Optional[str] = None
-    tags: Optional[list] = None
-    website: Optional[str] = None
-    contact_details: Optional[str] = None
-    documentation: Optional[str] = None
-    gdpr_requirements: Optional[str] = None
-    trustworthy_ai: Optional[str] = None
-    trustworthy_ai_assessment: Optional[str] = None
-    review_comments: Optional[list] = None
+    asset_type: Optional[str] = ""
+    technical_categories: Optional[list] = []
+    business_categories: Optional[list] = []
+    research_areas: Optional[str] = ""
+    license: Optional[str] = ""
+    other_license: Optional[str] = ""
+    tags: Optional[list] = []
+    website: Optional[str] = ""
+    contact_details: Optional[str] = ""
+    documentation: Optional[str] = ""
+    gdpr_requirements: Optional[str] = ""
+    trustworthy_ai: Optional[str] = ""
+    trustworthy_ai_assessment: Optional[str] = ""
+    review_comments: Optional[list] = []
 
 
 
@@ -170,7 +170,7 @@ async def insert_organisation(org: OrganisationModel):
 
     
     author_id = 1
-    drupal_id = 1
+    drupal_id = 2
     date = datetime.today().strftime('%Y-%m-%d') 
     new_organisation = Organisation(
         title = org.title,
@@ -179,7 +179,7 @@ async def insert_organisation(org: OrganisationModel):
         drupal_id = drupal_id,
         relation_to_organisation = org.relation_to_organisation,
         organisation_type = org.organisation_type, 
-        connection_to_ai = org.relation_to_organisation,
+        connection_to_ai = org.connection_to_ai,
         summary = org.summary,
         description = org.description,
         email = org.email
@@ -933,7 +933,7 @@ async def insert_project(project: ProjectModel):
     return  {"New project with ID": new_id}
 
 
-@app.get("/ai_assets/{id}",tags = ["Get"])
+@app.get("/ai_asset/{id}",tags = ["Get"])
 async def get_ai_asset(id):
 
     """
@@ -1018,7 +1018,7 @@ async def get_ai_asset(id):
     return result
 
 
-@app.get("/ai_assets/",tags = ["Get All"])
+@app.get("/ai_asset/",tags = ["Get All"])
 async def get_all_ai_assets():
 
     ai_asset = sa.Table('ai_asset', sa.MetaData(), autoload_with=engine)
@@ -2035,3 +2035,136 @@ async def delete_research_bundle(id):
     session.commit()
 
     return {"message": "OK"}  
+
+
+
+@app.patch("/ai_asset/{id}",tags = ["Update"])
+async def update_ai_asset(id, version,ai_asset:AiAssetModel):
+    updated_ai_asset_values = {key: val for key, val in dict(ai_asset).items() if val != "" and type(val) != list and key != "organisation"} # keep only non none values
+    AiAsset = Base.classes.ai_asset
+    print(updated_ai_asset_values)
+
+    session.query(
+        AiAsset
+    ).filter(AiAsset.id == id).update(updated_ai_asset_values)
+
+    if(ai_asset.organisation != ""):
+        organisation = sa.Table('organisation',sa.MetaData(), autoload_with=engine) 
+        q = session.query(
+            organisation.c.id
+        ).filter(
+            organisation.c.title == ai_asset.organisation
+        ).first()
+        if q is not None:
+            session.query(
+                AiAsset
+            ).filter(AiAsset.id == id).update({'organisation_id': q[0]})
+
+
+    if(ai_asset.technical_categories != []):
+        technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in ai_asset.technical_categories:
+            q = session.query(
+                technical_category.c.id
+                ).filter(
+                    technical_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid technical category was entered"}
+        
+        ai_asset_has_technical_category = sa.Table('ai_asset_has_technical_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            ai_asset_has_technical_category
+        ).filter(
+            ai_asset_has_technical_category.c.ai_asset_id == id,
+            ai_asset_has_technical_category.c.ai_asset_version == version
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "ai_asset_id": id,
+                "ai_asset_version": version,
+                "technical_category_id": cat_id
+            }
+            stmt = sa.insert(ai_asset_has_technical_category).values(vals)
+            session.execute(stmt)        
+
+    if(ai_asset.business_categories != []):
+        business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in ai_asset.business_categories:
+            q = session.query(
+                business_category.c.id
+                ).filter(
+                    business_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid business category was entered"}
+             
+        ai_asset_has_business_category = sa.Table('ai_asset_has_business_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            ai_asset_has_business_category
+        ).filter(
+            ai_asset_has_business_category.c.ai_asset_id == id,
+            ai_asset_has_business_category.c.ai_asset_version == version
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "ai_asset_id": id,
+                "ai_asset_version": version,
+                "business_category_id": cat_id
+            }
+            stmt = sa.insert(ai_asset_has_business_category).values(vals)
+            session.execute(stmt)            
+        
+
+    if(ai_asset.tags != []):
+        tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)
+        tag_ids = [] 
+        for t in ai_asset.tags:
+            q = session.query(
+                tag.c.id
+                ).filter(
+                    tag.c.tag == t
+                ).first()
+            if q is not None:
+                tag_ids.append(q[0])
+        print(tag_ids)
+        if(tag_ids == []):
+            return {"message":"No valid tags were entered"}
+             
+        ai_asset_has_tag = sa.Table('ai_asset_has_tag',sa.MetaData(), autoload_with=engine)
+        session.query(
+            ai_asset_has_tag
+        ).filter(
+            ai_asset_has_tag.c.ai_asset_id == id,
+            ai_asset_has_tag.c.ai_asset_version == version
+        ).delete()
+        
+        for tag_id in tag_ids:
+            vals = {
+                "ai_asset_id": id,
+                "ai_asset_version": version,
+                "tag_id": tag_id
+            }
+            print(vals)
+            stmt = sa.insert(ai_asset_has_tag).values(vals)
+            session.execute(stmt)      
+
+
+    return {"message": "OK"}
+
+
+
+
+
+
+@app.patch("/organisation/{id}",tags = ["Update"])
+async def update_organisation(id):
+    return {"message": "OK"}
