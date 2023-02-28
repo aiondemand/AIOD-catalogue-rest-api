@@ -1,7 +1,7 @@
 from grp import struct_group
 from os import stat_result
 from pyexpat import model
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
@@ -25,8 +25,8 @@ tags_metadata = [
 
 app = FastAPI(openapi_tags=tags_metadata)
 
-DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
-# DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
+# DATABASE_URL = "mysql+pymysql://root:JNqgDYAIMPaPCF89Qsfl@ai4europe-db:3306/mydb"
+DATABASE_URL = "mysql+pymysql://root:mypassword@172.17.0.2:3306/mydb" 
 engine = sa.create_engine(DATABASE_URL)
 session = Session(engine)
 
@@ -952,12 +952,16 @@ async def get_ai_asset(id):
     ai_asset_has_tag = sa.Table('ai_asset_has_tag',sa.MetaData(), autoload_with=engine)
 
     ai_asset_review = sa.Table('ai_asset_review',sa.MetaData(), autoload_with=engine)
-
+    
     q = session.query(
         ai_asset
         ).filter(
             ai_asset.c.id == id
         ).first()
+
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
+
 
     r = session.query(
         ai_asset_review.c.comment
@@ -1052,6 +1056,9 @@ async def get_organisation(id):
     ).filter(
         organisation.c.id == id
     ).first()
+    
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
    
     r = session.query(
         organisation_review.c.comment
@@ -1136,6 +1143,9 @@ async def get_case_study(id):
     ).filter(
         case_study.c.id == id
     ).first()
+
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
    
     r = session.query(
         case_study_review.c.comment
@@ -1223,6 +1233,9 @@ async def get_educational_resource(id):
         ).filter(
             educational_resource.c.id == id
         ).first()
+
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
 
     r = session.query(
         educational_resource_review.c.comment
@@ -1318,7 +1331,8 @@ async def get_event(id):
         event.c.id == id
     ).first()
    
-  
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")  
 
     b = session.query(
         business_category.c.category
@@ -1381,7 +1395,8 @@ async def get_news(id):
             news.c.id == id
         ).first()
 
-
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
     b = session.query(
@@ -1473,7 +1488,8 @@ async def get_open_call(id):
             open_call.c.id == id
         ).first()
 
-
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
     b = session.query(
@@ -1583,7 +1599,8 @@ async def get_project(id):
             project.c.id == id
         ).first()
 
-
+    if q is None: 
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
     aa = session.query(
@@ -2191,7 +2208,7 @@ async def update_organisation(id, organisation:OrganisationModel):
         session.query(
             organisation_has_technical_category
         ).filter(
-            organisation_has_technical_category.c.ai_asset_id == id
+            organisation_has_technical_category.c.organisation_id == id
         ).delete()
         
         for cat_id in category_ids:
@@ -2220,7 +2237,7 @@ async def update_organisation(id, organisation:OrganisationModel):
         session.query(
             organisation_has_business_category
         ).filter(
-            organisation_has_business_category.c.ai_asset_id == id
+            organisation_has_business_category.c.organisation_id == id
         ).delete()
         
         for cat_id in category_ids:
@@ -2234,3 +2251,4 @@ async def update_organisation(id, organisation:OrganisationModel):
     session.commit()
 
     return {"Updated organisation with id": id }
+
