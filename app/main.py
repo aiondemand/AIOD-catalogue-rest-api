@@ -2169,7 +2169,6 @@ async def update_ai_asset(id, version,ai_asset:AiAssetModel):
                 "ai_asset_version": version,
                 "tag_id": tag_id
             }
-            print(vals)
             stmt = sa.insert(ai_asset_has_tag).values(vals)
             session.execute(stmt)      
 
@@ -2251,4 +2250,409 @@ async def update_organisation(id, organisation:OrganisationModel):
     session.commit()
 
     return {"Updated organisation with id": id }
+
+
+@app.patch("/case_study/{id}",tags = ["Update"])
+async def update_case_study(id, case_study:CaseStudyModel):
+    updated_case_study_values = {key: val for key, val in dict(case_study).items() if val != "" and type(val) != list and key != "organisation"} # keep only non none values
+
+    CaseStudy = Base.classes.case_study
+    print(updated_case_study_values)
+    session.query(
+        CaseStudy
+    ).filter(CaseStudy.id == id).update(updated_case_study_values)
+
+
+    if(case_study.technical_categories != []):
+        technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in case_study.technical_categories:
+            q = session.query(
+                technical_category.c.id
+                ).filter(
+                    technical_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid technical category was entered"}
+        
+        case_study_has_technical_category = sa.Table('case_study_has_technical_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            case_study_has_technical_category
+        ).filter(
+            case_study_has_technical_category.c.case_study_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "case_study_id": id,
+                "technical_category_id": cat_id
+            }
+            stmt = sa.insert(case_study_has_technical_category).values(vals)
+            session.execute(stmt)        
+
+    if(case_study.business_categories != []):
+        business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in case_study.business_categories:
+            q = session.query(
+                business_category.c.id
+                ).filter(
+                    business_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid business category was entered"}
+             
+        case_study_has_business_category = sa.Table('case_study_has_business_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            case_study_has_business_category
+        ).filter(
+            case_study_has_business_category.c.case_study_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "case_study_id": id,
+                "business_category_id": cat_id
+            }
+            stmt = sa.insert(case_study_has_business_category).values(vals)
+            session.execute(stmt)            
+            
+    session.commit()
+
+    return {"Updated case study with id": id }
+
+
+@app.patch("/event/{id}",tags = ["Update"])
+async def update_event(id, event:EventModel):
+    updated_event_values = {key: val for key, val in dict(event).items() if val != "" and type(val) != list and key != "organisation"} # keep only non none values
+
+    Event = Base.classes.event
+    
+    session.query(
+        Event
+    ).filter(Event.id == id).update(updated_event_values)
+
+
+    if(event.business_categories != []):
+        business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in event.business_categories:
+            q = session.query(
+                business_category.c.id
+                ).filter(
+                    business_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid business category was entered"}
+             
+        event_has_business_category = sa.Table('event_has_business_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            event_has_business_category
+        ).filter(
+            event_has_business_category.c.event_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "event_id": id,
+                "business_category_id": cat_id
+            }
+            stmt = sa.insert(event_has_business_category).values(vals)
+            session.execute(stmt)            
+            
+    session.commit()
+
+    return {"Updated event with id": id }
+
+
+
+@app.patch("/news/{id}",tags = ["Update"])
+async def update_news(id, news:NewsModel):
+    updated_news_values = {key: val for key, val in dict(news).items() if val != "" and type(val) != list and key != "organisation"} # keep only non none values
+
+    News = Base.classes.news
+    session.query(
+        News
+    ).filter(News.id == id).update(updated_news_values)
+
+
+    if(news.news_categories != []):
+        news_category = sa.Table('news_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in news.news_categories:
+            q = session.query(
+                news_category.c.id
+                ).filter(
+                    news_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid news category was entered"}
+        
+        news_has_news_category = sa.Table('news_has_news_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            news_has_news_category
+        ).filter(
+            news_has_news_category.c.news_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "news_id": id,
+                "news_category_id": cat_id
+            }
+            stmt = sa.insert(news_has_news_category).values(vals)
+            session.execute(stmt)        
+
+    if(news.business_categories != []):
+        business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in news.business_categories:
+            q = session.query(
+                business_category.c.id
+                ).filter(
+                    business_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid business category was entered"}
+             
+        news_has_business_category = sa.Table('news_has_business_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            news_has_business_category
+        ).filter(
+            news_has_business_category.c.ai_asset_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "news_id": id,
+                "business_category_id": cat_id
+            }
+            stmt = sa.insert(news_has_business_category).values(vals)
+            session.execute(stmt)            
+            
+    session.commit()
+
+    return {"Updated news with id": id }
+
+
+
+
+@app.patch("/educational_resource/{id}",tags = ["Update"])
+async def update_educational_resource(id, educational_resource:EducationalResourceModel):
+    updated_educational_resource_values = {key: val for key, val in dict(educational_resource).items() if val != "" and type(val) != list and key != "organisation"} # keep only non none values
+
+    EducationalResource = Base.classes.educational_resource
+    session.query(
+        EducationalResource
+    ).filter(EducationalResource.id == id).update(updated_educational_resource_values)
+
+
+    if(educational_resource.technical_categories != []):
+        technical_category = sa.Table('technical_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in educational_resource.technical_categories:
+            q = session.query(
+                technical_category.c.id
+                ).filter(
+                    technical_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid technical category was entered"}
+        
+        educational_resource_has_technical_category = sa.Table('educational_resource_has_technical_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            educational_resource_has_technical_category
+        ).filter(
+            educational_resource_has_technical_category.c.educational_resource_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "educational_resource_id": id,
+                "technical_category_id": cat_id
+            }
+            stmt = sa.insert(educational_resource_has_technical_category).values(vals)
+            session.execute(stmt)        
+
+    if(educational_resource.business_categories != []):
+        business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in educational_resource.business_categories:
+            q = session.query(
+                business_category.c.id
+                ).filter(
+                    business_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid business category was entered"}
+             
+        educational_resource_has_business_category = sa.Table('educational_resource_has_business_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            educational_resource_has_business_category
+        ).filter(
+            educational_resource_has_business_category.c.educational_resource_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "educational_resource_id": id,
+                "business_category_id": cat_id
+            }
+            stmt = sa.insert(educational_resource_has_business_category).values(vals)
+            session.execute(stmt)   
+
+    if(educational_resource.tags != []):
+        tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)
+        tag_ids = [] 
+        for t in educational_resource.tags:
+            q = session.query(
+                tag.c.id
+                ).filter(
+                    tag.c.tag == t
+                ).first()
+            if q is not None:
+                tag_ids.append(q[0])
+
+        if(tag_ids == []):
+            return {"message":"No valid tags were entered"}
+             
+        educational_resource_has_tag = sa.Table('educational_resource_has_tag',sa.MetaData(), autoload_with=engine)
+        session.query(
+            educational_resource_has_tag
+        ).filter(
+            educational_resource_has_tag.c.educational_resource_id == id
+        ).delete()
+        
+        for tag_id in tag_ids:
+            vals = {
+                "educational_resource_id": id,
+                "tag_id": tag_id
+            }
+            stmt = sa.insert(educational_resource_has_tag).values(vals)
+            session.execute(stmt)      
+             
+            
+    session.commit()
+
+    return {"Updated educational resource with id": id }
+
+
+
+@app.patch("/open_call/{id}",tags = ["Update"])
+async def update_open_call(id, open_call:OpenCallModel):
+    updated_open_call_values = {key: val for key, val in dict(open_call).items() if val != "" and type(val) != list and key != "organisation"} # keep only non none values
+
+    OpenCall = Base.classes.open_call
+    session.query(
+        OpenCall
+    ).filter(OpenCall.id == id).update(updated_open_call_values)
+
+
+    if(open_call.target_applications != []):
+        target_application = sa.Table('target_application',sa.MetaData(), autoload_with=engine)
+        app_ids = [] 
+        for application in open_call.target_applications:
+            q = session.query(
+                target_application.c.id
+                ).filter(
+                    target_application.c.application == application
+                ).first()
+            if q is not None:
+                app_ids.append(q[0])
+        if(app_ids == []):
+            return {"message":"No valid target application was entered"}
+        
+        open_call_has_target_application = sa.Table('open_call_has_target_application',sa.MetaData(), autoload_with=engine)
+        session.query(
+            open_call_has_target_application
+        ).filter(
+            open_call_has_target_application.c.open_call_id == id
+        ).delete()
+        
+        for app_id in app_ids:
+            vals = {
+                "open_call_id": id,
+                "target_application_id": app_id
+            }
+            stmt = sa.insert(open_call_has_target_application).values(vals)
+            session.execute(stmt)        
+
+    if(open_call.business_categories != []):
+        business_category = sa.Table('business_category',sa.MetaData(), autoload_with=engine)
+        category_ids = [] 
+        for category in open_call.business_categories:
+            q = session.query(
+                business_category.c.id
+                ).filter(
+                    business_category.c.category == category
+                ).first()
+            if q is not None:
+                category_ids.append(q[0])
+        if(category_ids == []):
+            return {"message":"No valid business category was entered"}
+             
+        open_call_has_business_category = sa.Table('open_call_has_business_category',sa.MetaData(), autoload_with=engine)
+        session.query(
+            open_call_has_business_category
+        ).filter(
+            open_call_has_business_category.c.open_call_id == id
+        ).delete()
+        
+        for cat_id in category_ids:
+            vals = {
+                "open_call_id": id,
+                "business_category_id": cat_id
+            }
+            stmt = sa.insert(open_call_has_business_category).values(vals)
+            session.execute(stmt)            
+
+
+    if(open_call.tags != []):
+        tag = sa.Table('tag',sa.MetaData(), autoload_with=engine)
+        tag_ids = [] 
+        for t in open_call.tags:
+            q = session.query(
+                tag.c.id
+                ).filter(
+                    tag.c.tag == t
+                ).first()
+            if q is not None:
+                tag_ids.append(q[0])
+
+        if(tag_ids == []):
+            return {"message":"No valid tags were entered"}
+             
+        open_call_has_tag = sa.Table('open_call_has_tag',sa.MetaData(), autoload_with=engine)
+        session.query(
+            open_call_has_tag
+        ).filter(
+            open_call_has_tag.c.open_call_id == id
+        ).delete()
+        
+        for tag_id in tag_ids:
+            vals = {
+                "open_call_id": id,
+                "tag_id": tag_id
+            }
+            stmt = sa.insert(open_call_has_tag).values(vals)
+            session.execute(stmt)      
+             
+            
+    session.commit()
+
+    return {"Updated open call with id": id }
 
