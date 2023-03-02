@@ -23,7 +23,7 @@ tags_metadata = [
     {"name": "News"},
     {"name": "Open Call"},
     {"name": "Project"},
-    {"name": "Research Bundle"},
+    {"name": "Research Bundle"}
 ]
 
 
